@@ -53,11 +53,11 @@ def emoji_for_notification_type(notification_type: str):
 
 def build_service_embeds(ctx, site_url, timestamp):
     description = "**%s -> %s**\n\n%s" % (
-        ctx.get("LASTSERVICESTATE"),
+        ctx.get("LASTSERVICESTATE", ctx.get("PREVIOUSHOSTHARDSTATE")),
         ctx.get("SERVICESTATE"),
         ctx.get("SERVICEOUTPUT"),
     )
-    if len(ctx.get("NOTIFICATIONCOMMENT")) > 0:
+    if len(ctx.get("NOTIFICATIONCOMMENT", "")) > 0:
         description = "\n\n".join([description, ctx.get("NOTIFICATIONCOMMENT")])
     embed = {
         "title": "%s%s: %s"
@@ -85,11 +85,11 @@ def build_service_embeds(ctx, site_url, timestamp):
 
 def build_host_embeds(ctx, site_url, timestamp):
     description = "**%s -> %s**\n\n%s" % (
-        ctx.get("LASTHOSTSTATE"),
+        ctx.get("LASTHOSTSTATE", ctx.get("PREVIOUSHOSTHARDSTATE")),
         ctx.get("HOSTSTATE"),
         ctx.get("HOSTOUTPUT"),
     )
-    if len(ctx.get("NOTIFICATIONCOMMENT")) > 0:
+    if len(ctx.get("NOTIFICATIONCOMMENT", "")) > 0:
         description = "\n\n".join([description, ctx.get("NOTIFICATIONCOMMENT")])
     embed = {
         "title": "%s%s: Host: %s"
