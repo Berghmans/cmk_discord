@@ -21,20 +21,20 @@ class TestAlertColors(unittest.TestCase):
 
 
 class TestDiscordColors(unittest.TestCase):
-    """Tests for DISCORD_COLORS constants"""
+    """Tests for DiscordColor enum"""
 
     def test_discord_colors_exist(self):
-        expected_colors = ["Green", "Orange", "Red", "DarkGrey", "Yellow"]
+        expected_colors = ["GREEN", "ORANGE", "RED", "DARK_GREY", "YELLOW"]
 
         for color in expected_colors:
-            self.assertIn(color, cmk_discord.DISCORD_COLORS)
-            self.assertIsInstance(cmk_discord.DISCORD_COLORS[color], int)
+            self.assertTrue(hasattr(cmk_discord.DiscordColor, color))
+            self.assertIsInstance(getattr(cmk_discord.DiscordColor, color), int)
 
     def test_discord_colors_are_valid_integers(self):
         # Discord colors should be positive integers (decimal representation of hex colors)
-        for color_value in cmk_discord.DISCORD_COLORS.values():
-            self.assertGreater(color_value, 0)
-            self.assertLess(color_value, 16777216)  # Max value for 24-bit RGB color
+        for color in cmk_discord.DiscordColor:
+            self.assertGreater(color.value, 0)
+            self.assertLess(color.value, 16777216)  # Max value for 24-bit RGB color
 
 
 if __name__ == '__main__':

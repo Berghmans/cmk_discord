@@ -9,24 +9,25 @@ import os
 import sys
 import datetime
 import requests
+from enum import IntEnum
 from http import HTTPStatus
 
-DISCORD_COLORS = {
-    "Green": 5763719,
-    "Orange": 15105570,
-    "Red": 15548997,
-    "DarkGrey": 9936031,
-    "Yellow": 16776960,
-}
+
+class DiscordColor(IntEnum):
+    GREEN = 5763719
+    ORANGE = 15105570
+    RED = 15548997
+    DARK_GREY = 9936031
+    YELLOW = 16776960
 
 ALERT_COLORS = {
-    "CRITICAL": DISCORD_COLORS["Red"],
-    "DOWN": DISCORD_COLORS["Red"],
-    "WARNING": DISCORD_COLORS["Yellow"],
-    "OK": DISCORD_COLORS["Green"],
-    "UP": DISCORD_COLORS["Green"],
-    "UNKNOWN": DISCORD_COLORS["Orange"],
-    "UNREACHABLE": DISCORD_COLORS["DarkGrey"],
+    "CRITICAL": DiscordColor.RED,
+    "DOWN": DiscordColor.RED,
+    "WARNING": DiscordColor.YELLOW,
+    "OK": DiscordColor.GREEN,
+    "UP": DiscordColor.GREEN,
+    "UNKNOWN": DiscordColor.ORANGE,
+    "UNREACHABLE": DiscordColor.DARK_GREY,
 }
 
 
