@@ -28,7 +28,6 @@ jobs:
       - run: poetry run pytest --cov=. --cov-report=xml --cov-report=term-missing
 
   code-quality:
-    name: Code Quality Checks
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
