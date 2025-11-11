@@ -10,7 +10,7 @@ import sys
 import datetime
 import requests
 from dataclasses import dataclass
-from enum import IntEnum
+from enum import IntEnum, Enum
 from http import HTTPStatus
 from typing import Optional
 
@@ -82,6 +82,23 @@ class Context:
         }
         return cls.from_dict(env_dict)
 
+    def validate(self) -> None:
+        """Validate the context and raise SystemExit if invalid"""
+        if not self.webhook_url:
+            sys.stderr.write("Empty webhook url given as parameter 1")
+            sys.exit(2)
+        if not self.webhook_url.startswith("https://discord.com"):
+            sys.stderr.write(
+                "Invalid Discord webhook url given as first parameter (not starting with https://discord.com )"
+            )
+            sys.exit(2)
+        if self.site_url and not self.site_url.startswith("http"):
+            sys.stderr.write(
+                "Invalid site url given as second parameter (not starting with http): %s"
+                % self.site_url
+            )
+            sys.exit(2)
+
 
 class DiscordColor(IntEnum):
     GREEN = 5763719
@@ -90,35 +107,28 @@ class DiscordColor(IntEnum):
     DARK_GREY = 9936031
     YELLOW = 16776960
 
-ALERT_COLORS = {
-    "CRITICAL": DiscordColor.RED,
-    "DOWN": DiscordColor.RED,
-    "WARNING": DiscordColor.YELLOW,
-    "OK": DiscordColor.GREEN,
-    "UP": DiscordColor.GREEN,
-    "UNKNOWN": DiscordColor.ORANGE,
-    "UNREACHABLE": DiscordColor.DARK_GREY,
-}
+
+class AlertColor(Enum):
+    """Mapping of CheckMK alert states to Discord colors"""
+    CRITICAL = DiscordColor.RED
+    DOWN = DiscordColor.RED
+    WARNING = DiscordColor.YELLOW
+    OK = DiscordColor.GREEN
+    UP = DiscordColor.GREEN
+    UNKNOWN = DiscordColor.ORANGE
+    UNREACHABLE = DiscordColor.DARK_GREY
 
 
-def emoji_for_notification_type(notification_type: str):
-    if notification_type.startswith("PROBLEM"):
-        return ":rotating_light: "
-    if notification_type.startswith("RECOVERY"):
-        return ":white_check_mark: "
-    if notification_type.startswith("ACKNOWLEDGEMENT"):
-        return ":ballot_box_with_check: "
-    if notification_type.startswith("FLAPPINGSTART"):
-        return ":interrobang: "
-    if notification_type.startswith("FLAPPINGSTOP"):
-        return ":white_check_mark: "
-    if notification_type.startswith("DOWNTIMESTART"):
-        return ":alarm_clock: "
-    if notification_type.startswith("DOWNTIMEEND"):
-        return ":white_check_mark: "
-    if notification_type.startswith("DOWNTIMECANCELLED"):
-        return ":ballot_box_with_check: "
-    return ""
+class NotificationEmoji(str, Enum):
+    """Mapping of CheckMK notification types to Discord emojis"""
+    PROBLEM = ":rotating_light:"
+    RECOVERY = ":white_check_mark:"
+    ACKNOWLEDGEMENT = ":ballot_box_with_check:"
+    FLAPPINGSTART = ":interrobang:"
+    FLAPPINGSTOP = ":white_check_mark:"
+    DOWNTIMESTART = ":alarm_clock:"
+    DOWNTIMEEND = ":white_check_mark:"
+    DOWNTIMECANCELLED = ":ballot_box_with_check:"
 
 
 @dataclass
@@ -135,6 +145,32 @@ class Embed:
     footer_text: Optional[str]
     url_path: str
     fields: Optional[list] = None
+
+    @staticmethod
+    def get_alert_color(state: str) -> int:
+        """Get the Discord color for a given alert state"""
+        return AlertColor[state].value
+
+    @staticmethod
+    def get_emoji(notification_type: str) -> str:
+        """Get the emoji for the notification type"""
+        # IMPORTANT: Use __members__ instead of iterating the enum directly.
+        # When an enum has duplicate values (e.g., RECOVERY, FLAPPINGSTOP, and DOWNTIMEEND
+        # all have ":white_check_mark:"), Python treats duplicates as aliases. Iterating
+        # the enum only yields canonical members, skipping aliases. However, __members__
+        # contains ALL member names including aliases, allowing proper lookup.
+
+        # Try exact match first using the enum members dictionary
+        if notification_type in NotificationEmoji.__members__:
+            return NotificationEmoji[notification_type].value
+
+        # Fallback: check if notification_type starts with any enum member name
+        # (for handling variants like PROBLEMHOST, RECOVERYHOST)
+        for member_name in NotificationEmoji.__members__:
+            if notification_type.startswith(member_name):
+                return NotificationEmoji[member_name].value
+
+        return ""
 
     @classmethod
     def from_context(cls, ctx: Context) -> "Embed":
@@ -156,8 +192,8 @@ class Embed:
 
     def _build_title(self) -> str:
         """Build the embed title with emoji and notification type"""
-        return "%s%s: %s" % (
-            emoji_for_notification_type(self.ctx.notification_type),
+        return "%s %s: %s" % (
+            Embed.get_emoji(self.ctx.notification_type),
             self.ctx.notification_type,
             self.title_subject,
         )
@@ -197,7 +233,7 @@ class ServiceEmbed(Embed):
             current_state=ctx.service_state,
             output=ctx.service_output,
             title_subject=ctx.service_desc,
-            color=ALERT_COLORS[ctx.service_state],
+            color=Embed.get_alert_color(ctx.service_state),
             footer_text=ctx.service_check_command,
             url_path=ctx.service_url,
             fields=[
@@ -218,7 +254,7 @@ class HostEmbed(Embed):
             current_state=ctx.host_state,
             output=ctx.host_output,
             title_subject="Host: %s" % ctx.hostname,
-            color=ALERT_COLORS[ctx.host_state],
+            color=Embed.get_alert_color(ctx.host_state),
             footer_text=ctx.host_check_command,
             url_path=ctx.host_url,
         )
@@ -255,21 +291,7 @@ class DiscordWebhook:
 
 def main():
     ctx = Context.from_env()
-
-    if not ctx.webhook_url:
-        sys.stderr.write("Empty webhook url given as parameter 1")
-        sys.exit(2)
-    if not ctx.webhook_url.startswith("https://discord.com"):
-        sys.stderr.write(
-            "Invalid Discord webhook url given as first parameter (not starting with https://discord.com )"
-        )
-        sys.exit(2)
-    if ctx.site_url and not ctx.site_url.startswith("http"):
-        sys.stderr.write(
-            "Invalid site url given as second parameter (not starting with http): %s"
-            % ctx.site_url
-        )
-        sys.exit(2)
+    ctx.validate()
 
     embed = Embed.from_context(ctx)
     webhook = DiscordWebhook(ctx.webhook_url, embed, ctx.omd_site)

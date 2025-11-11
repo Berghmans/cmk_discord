@@ -65,7 +65,7 @@ class TestAllServiceData(unittest.TestCase):
 
                 # Validate color is valid
                 self.assertIsInstance(embed["color"], int)
-                self.assertIn(embed["color"], cmk_discord.ALERT_COLORS.values())
+                self.assertIn(embed["color"], [c.value for c in cmk_discord.DiscordColor])
 
                 # Validate fields structure
                 self.assertEqual(len(embed["fields"]), 2)
@@ -127,7 +127,7 @@ class TestAllHostData(unittest.TestCase):
 
                 # Validate color is valid
                 self.assertIsInstance(embed["color"], int)
-                self.assertIn(embed["color"], cmk_discord.ALERT_COLORS.values())
+                self.assertIn(embed["color"], [c.value for c in cmk_discord.DiscordColor])
 
                 # Validate title contains hostname
                 self.assertIn(ctx.hostname, embed["title"])

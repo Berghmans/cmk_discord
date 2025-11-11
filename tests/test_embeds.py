@@ -26,7 +26,7 @@ class TestBuildServiceEmbeds(unittest.TestCase):
         self.assertEqual(embed["title"], ":rotating_light: PROBLEM: HTTP")
         self.assertIn("OK -> CRITICAL", embed["description"])
         self.assertIn("Connection timeout", embed["description"])
-        self.assertEqual(embed["color"], cmk_discord.ALERT_COLORS["CRITICAL"])
+        self.assertEqual(embed["color"], cmk_discord.Embed.get_alert_color("CRITICAL"))
         self.assertEqual(embed["timestamp"], self.timestamp)
         self.assertEqual(embed["url"], "https://checkmkhost.mycompany.com/my_monitoring/check_mk/view.py?host=webserver01&service=HTTP")
 
@@ -50,7 +50,7 @@ class TestBuildServiceEmbeds(unittest.TestCase):
         embeds = [cmk_discord.ServiceEmbed(ctx, self.timestamp).to_dict()]
 
         embed = embeds[0]
-        self.assertEqual(embed["color"], cmk_discord.ALERT_COLORS["WARNING"])
+        self.assertEqual(embed["color"], cmk_discord.Embed.get_alert_color("WARNING"))
 
     def test_build_service_embeds_fields(self):
         embeds = [cmk_discord.ServiceEmbed(self.ctx, self.timestamp).to_dict()]
@@ -70,7 +70,7 @@ class TestBuildServiceEmbeds(unittest.TestCase):
         embed = embeds[0]
         self.assertEqual(embed["title"], ":white_check_mark: RECOVERY: HTTP")
         self.assertIn("CRITICAL -> OK", embed["description"])
-        self.assertEqual(embed["color"], cmk_discord.ALERT_COLORS["OK"])
+        self.assertEqual(embed["color"], cmk_discord.Embed.get_alert_color("OK"))
 
 
 class TestBuildHostEmbeds(unittest.TestCase):
@@ -89,7 +89,7 @@ class TestBuildHostEmbeds(unittest.TestCase):
         self.assertEqual(embed["title"], ":rotating_light: PROBLEM: Host: webserver01")
         self.assertIn("UP -> DOWN", embed["description"])
         self.assertIn("Host Unreachable", embed["description"])
-        self.assertEqual(embed["color"], cmk_discord.ALERT_COLORS["DOWN"])
+        self.assertEqual(embed["color"], cmk_discord.Embed.get_alert_color("DOWN"))
         self.assertEqual(embed["timestamp"], self.timestamp)
         self.assertEqual(embed["url"], "https://checkmkhost.mycompany.com/my_monitoring/check_mk/view.py?host=webserver01")
 
@@ -113,7 +113,7 @@ class TestBuildHostEmbeds(unittest.TestCase):
         embeds = [cmk_discord.HostEmbed(ctx, self.timestamp).to_dict()]
 
         embed = embeds[0]
-        self.assertEqual(embed["color"], cmk_discord.ALERT_COLORS["UNREACHABLE"])
+        self.assertEqual(embed["color"], cmk_discord.Embed.get_alert_color("UNREACHABLE"))
 
     def test_build_host_embeds_footer(self):
         embeds = [cmk_discord.HostEmbed(self.ctx, self.timestamp).to_dict()]
@@ -128,7 +128,7 @@ class TestBuildHostEmbeds(unittest.TestCase):
         embed = embeds[0]
         self.assertEqual(embed["title"], ":white_check_mark: RECOVERY: Host: webserver01")
         self.assertIn("DOWN -> UP", embed["description"])
-        self.assertEqual(embed["color"], cmk_discord.ALERT_COLORS["UP"])
+        self.assertEqual(embed["color"], cmk_discord.Embed.get_alert_color("UP"))
 
 
 class TestBuildEmbeds(unittest.TestCase):

@@ -10,14 +10,14 @@ import cmk_discord
 
 
 class TestAlertColors(unittest.TestCase):
-    """Tests for ALERT_COLORS constants"""
+    """Tests for Embed.get_alert_color() static method"""
 
     def test_alert_colors_exist(self):
         expected_states = ["CRITICAL", "DOWN", "WARNING", "OK", "UP", "UNKNOWN", "UNREACHABLE"]
 
         for state in expected_states:
-            self.assertIn(state, cmk_discord.ALERT_COLORS)
-            self.assertIsInstance(cmk_discord.ALERT_COLORS[state], int)
+            color = cmk_discord.Embed.get_alert_color(state)
+            self.assertIsInstance(color, int)
 
 
 class TestDiscordColors(unittest.TestCase):

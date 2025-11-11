@@ -10,37 +10,37 @@ import cmk_discord
 
 
 class TestEmojiForNotificationType(unittest.TestCase):
-    """Tests for emoji_for_notification_type function"""
+    """Tests for Embed.get_emoji() static method"""
 
     def test_problem_notification(self):
-        self.assertEqual(cmk_discord.emoji_for_notification_type("PROBLEM"), ":rotating_light: ")
-        self.assertEqual(cmk_discord.emoji_for_notification_type("PROBLEMHOST"), ":rotating_light: ")
+        self.assertEqual(cmk_discord.Embed.get_emoji("PROBLEM"), ":rotating_light:")
+        self.assertEqual(cmk_discord.Embed.get_emoji("PROBLEMHOST"), ":rotating_light:")
 
     def test_recovery_notification(self):
-        self.assertEqual(cmk_discord.emoji_for_notification_type("RECOVERY"), ":white_check_mark: ")
-        self.assertEqual(cmk_discord.emoji_for_notification_type("RECOVERYHOST"), ":white_check_mark: ")
+        self.assertEqual(cmk_discord.Embed.get_emoji("RECOVERY"), ":white_check_mark:")
+        self.assertEqual(cmk_discord.Embed.get_emoji("RECOVERYHOST"), ":white_check_mark:")
 
     def test_acknowledgement_notification(self):
-        self.assertEqual(cmk_discord.emoji_for_notification_type("ACKNOWLEDGEMENT"), ":ballot_box_with_check: ")
+        self.assertEqual(cmk_discord.Embed.get_emoji("ACKNOWLEDGEMENT"), ":ballot_box_with_check:")
 
     def test_flapping_start_notification(self):
-        self.assertEqual(cmk_discord.emoji_for_notification_type("FLAPPINGSTART"), ":interrobang: ")
+        self.assertEqual(cmk_discord.Embed.get_emoji("FLAPPINGSTART"), ":interrobang:")
 
     def test_flapping_stop_notification(self):
-        self.assertEqual(cmk_discord.emoji_for_notification_type("FLAPPINGSTOP"), ":white_check_mark: ")
+        self.assertEqual(cmk_discord.Embed.get_emoji("FLAPPINGSTOP"), ":white_check_mark:")
 
     def test_downtime_start_notification(self):
-        self.assertEqual(cmk_discord.emoji_for_notification_type("DOWNTIMESTART"), ":alarm_clock: ")
+        self.assertEqual(cmk_discord.Embed.get_emoji("DOWNTIMESTART"), ":alarm_clock:")
 
     def test_downtime_end_notification(self):
-        self.assertEqual(cmk_discord.emoji_for_notification_type("DOWNTIMEEND"), ":white_check_mark: ")
+        self.assertEqual(cmk_discord.Embed.get_emoji("DOWNTIMEEND"), ":white_check_mark:")
 
     def test_downtime_cancelled_notification(self):
-        self.assertEqual(cmk_discord.emoji_for_notification_type("DOWNTIMECANCELLED"), ":ballot_box_with_check: ")
+        self.assertEqual(cmk_discord.Embed.get_emoji("DOWNTIMECANCELLED"), ":ballot_box_with_check:")
 
     def test_unknown_notification_type(self):
-        self.assertEqual(cmk_discord.emoji_for_notification_type("UNKNOWN_TYPE"), "")
-        self.assertEqual(cmk_discord.emoji_for_notification_type(""), "")
+        self.assertEqual(cmk_discord.Embed.get_emoji("UNKNOWN_TYPE"), "")
+        self.assertEqual(cmk_discord.Embed.get_emoji(""), "")
 
 
 if __name__ == '__main__':
