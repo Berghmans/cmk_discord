@@ -9,7 +9,7 @@
   },
   "name": "discord",
   "title": "Discord Notification",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "version.min_required": "2.2.0p21",
   "version.packaged": "2.4.0p12",
   "version.usable_until": null

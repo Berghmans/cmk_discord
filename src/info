@@ -4,7 +4,7 @@
  'files': {'notifications': ['cmk_discord.py']},
  'name': 'discord',
  'title': 'Discord Notification',
- 'version': '0.0.2',  # x-release-please-version
+ 'version': '0.0.3',  # x-release-please-version
  'version.min_required': '2.2.0p21',
  'version.packaged': '2.4.0p12',
     'version.usable_until': None}
