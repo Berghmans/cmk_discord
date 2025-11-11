@@ -39,15 +39,21 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Prepare MKP structure
+      - name: Prepare version and MKP structure
+        id: prep
         run: |
+          # Strip 'v' prefix from tag name for mkp-builder
+          VERSION="${{ needs.release.outputs.tag_name }}"
+          VERSION="${VERSION#v}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
           mkdir -p local/share/check_mk/notifications
           cp cmk_discord.py local/share/check_mk/notifications/
 
       - name: Build MKP
         uses: oposs/mkp-builder@v2
         with:
-          version: ${{ needs.release.outputs.tag_name }}
+          version: ${{ steps.prep.outputs.version }}
         id: mkp
 
       - name: Upload MKP package
