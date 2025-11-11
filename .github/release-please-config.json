@@ -1,0 +1,18 @@
+{
+  "packages": {
+    ".": {
+      "release-type": "python",
+      "package-name": "cmk-discord",
+      "changelog-path": "CHANGELOG.md",
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true,
+      "extra-files": [
+        {
+          "type": "toml",
+          "path": "pyproject.toml",
+          "jsonpath": "$.tool.poetry.version"
+        }
+      ]
+    }
+  }
+}
