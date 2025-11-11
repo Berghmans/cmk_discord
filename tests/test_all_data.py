@@ -155,7 +155,10 @@ class TestAllWebhookContent(unittest.TestCase):
 
                 # Should generate webhook content without errors
                 try:
-                    content = cmk_discord.build_webhook_content(ctx, site_url)
+                    webhook_url = "https://discord.com/api/webhooks/123/abc"
+                    embed = cmk_discord.Embed.from_context(ctx, site_url)
+                    webhook = cmk_discord.DiscordWebhook(webhook_url, embed, ctx.get("OMD_SITE"))
+                    content = webhook._build_payload()
                 except Exception as e:
                     self.fail(f"Failed to generate webhook content for {test_label}: {type(e).__name__}: {e}")
 

@@ -59,6 +59,13 @@ class Embed:
         self.site_url = site_url
         self.timestamp = timestamp
 
+    @classmethod
+    def from_context(cls, ctx: dict, site_url: str = None) -> "Embed":
+        """Factory method to create the appropriate embed type based on context"""
+        timestamp = str(datetime.datetime.fromisoformat(ctx["SHORTDATETIME"]).astimezone())
+        embed_class = ServiceEmbed if ctx.get("WHAT") == "SERVICE" else HostEmbed
+        return embed_class(ctx, site_url, timestamp)
+
     def _build_description(self, last_state_key: str, fallback_key: str, current_state_key: str, output_key: str) -> str:
         """Build the embed description with state transition and output"""
         description = "**%s -> %s**\n\n%s" % (
@@ -137,18 +144,33 @@ class HostEmbed(Embed):
         return embed
 
 
-def build_embeds(ctx, site_url):
-    timestamp = str(datetime.datetime.fromisoformat(ctx["SHORTDATETIME"]).astimezone())
-    embed_class = ServiceEmbed if ctx.get("WHAT") == "SERVICE" else HostEmbed
-    return [embed_class(ctx, site_url, timestamp).to_dict()]
+class DiscordWebhook:
+    """Discord webhook for sending CheckMK notifications"""
 
+    AVATAR_URL = "https://checkmk.com/android-chrome-192x192.png"
 
-def build_webhook_content(ctx, site_url):
-    return {
-        "username": "Checkmk - " + ctx.get("OMD_SITE"),
-        "avatar_url": "https://checkmk.com/android-chrome-192x192.png",
-        "embeds": build_embeds(ctx, site_url),
-    }
+    def __init__(self, url: str, embed: Embed, site_name: str):
+        self.url = url
+        self.embed = embed
+        self.site_name = site_name
+
+    def _build_payload(self) -> dict:
+        """Build the complete webhook payload"""
+        return {
+            "username": "Checkmk - " + self.site_name,
+            "avatar_url": self.AVATAR_URL,
+            "embeds": [self.embed.to_dict()],
+        }
+
+    def send(self) -> None:
+        """Send the webhook to Discord"""
+        response = requests.post(url=self.url, json=self._build_payload())
+        if response.status_code != HTTPStatus.NO_CONTENT.value:
+            sys.stderr.write(
+                "Unexpected response when calling webhook url %s: %i. Response body: %s"
+                % (self.url, response.status_code, response.text)
+            )
+            sys.exit(1)
 
 
 def build_context():
@@ -157,16 +179,6 @@ def build_context():
         for (var, value) in os.environ.items()
         if var.startswith("NOTIFY_")
     }
-
-
-def post_webhook(url, json):
-    response = requests.post(url=url, json=json)
-    if response.status_code != HTTPStatus.NO_CONTENT.value:
-        sys.stderr.write(
-            "Unexpected response when calling webhook url %s: %i. Response body: %s"
-            % (url, response.status_code, response.text)
-        )
-        sys.exit(1)
 
 
 def main():
@@ -189,9 +201,9 @@ def main():
         )
         sys.exit(2)
 
-    webhook_content = build_webhook_content(ctx, site_url)
-
-    post_webhook(webhook_url, webhook_content)
+    embed = Embed.from_context(ctx, site_url)
+    webhook = DiscordWebhook(webhook_url, embed, ctx.get("OMD_SITE"))
+    webhook.send()
 
 
 if __name__ == "__main__":

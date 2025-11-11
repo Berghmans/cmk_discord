@@ -9,38 +9,50 @@ from http import HTTPStatus
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import cmk_discord
+from tests.test_data_loader import load_latest_test_data
 
 
-class TestPostWebhook(unittest.TestCase):
-    """Tests for post_webhook function"""
+class TestDiscordWebhookSend(unittest.TestCase):
+    """Tests for DiscordWebhook.send() method"""
 
-    @patch('cmk_discord.requests.post')
-    def test_post_webhook_success(self, mock_post):
+    @patch('requests.post')
+    def test_send_success(self, mock_post):
         mock_response = MagicMock()
         mock_response.status_code = HTTPStatus.NO_CONTENT.value
         mock_post.return_value = mock_response
 
-        url = "https://discord.com/api/webhooks/123"
-        json_data = {"test": "data"}
+        ctx = load_latest_test_data("service", "problem_critical.json")
+        webhook_url = "https://discord.com/api/webhooks/123/abc"
+        site_url = ctx.get("PARAMETER_2")
+
+        embed = cmk_discord.Embed.from_context(ctx, site_url)
+        webhook = cmk_discord.DiscordWebhook(webhook_url, embed, ctx.get("OMD_SITE"))
 
         # Should not raise an exception
-        cmk_discord.post_webhook(url, json_data)
+        webhook.send()
 
-        mock_post.assert_called_once_with(url=url, json=json_data)
+        mock_post.assert_called_once()
+        call_kwargs = mock_post.call_args[1]
+        self.assertEqual(call_kwargs['url'], webhook_url)
+        self.assertIn('json', call_kwargs)
 
-    @patch('cmk_discord.requests.post')
+    @patch('requests.post')
     @patch('sys.stderr.write')
-    def test_post_webhook_failure(self, mock_stderr, mock_post):
+    def test_send_failure(self, mock_stderr, mock_post):
         mock_response = MagicMock()
         mock_response.status_code = 400
         mock_response.text = "Bad Request"
         mock_post.return_value = mock_response
 
-        url = "https://discord.com/api/webhooks/123"
-        json_data = {"test": "data"}
+        ctx = load_latest_test_data("service", "problem_critical.json")
+        webhook_url = "https://discord.com/api/webhooks/123/abc"
+        site_url = ctx.get("PARAMETER_2")
+
+        embed = cmk_discord.Embed.from_context(ctx, site_url)
+        webhook = cmk_discord.DiscordWebhook(webhook_url, embed, ctx.get("OMD_SITE"))
 
         with self.assertRaises(SystemExit) as cm:
-            cmk_discord.post_webhook(url, json_data)
+            webhook.send()
 
         self.assertEqual(cm.exception.code, 1)
         mock_stderr.assert_called_once()

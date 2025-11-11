@@ -136,35 +136,40 @@ class TestBuildHostEmbeds(unittest.TestCase):
 
 
 class TestBuildEmbeds(unittest.TestCase):
-    """Tests for build_embeds function"""
+    """Tests for Embed.from_context factory method"""
 
     def test_build_embeds_for_service(self):
         ctx = load_test_data("service/problem_critical.json")
         site_url = ctx.get("PARAMETER_2")
 
-        embeds = cmk_discord.build_embeds(ctx, site_url)
+        embed = cmk_discord.Embed.from_context(ctx, site_url)
+        embed_dict = embed.to_dict()
 
-        self.assertEqual(len(embeds), 1)
-        self.assertIn("HTTP", embeds[0]["title"])
+        self.assertIn("HTTP", embed_dict["title"])
+        self.assertIsInstance(embed, cmk_discord.ServiceEmbed)
 
     def test_build_embeds_for_host(self):
         ctx = load_test_data("host/problem_down.json")
         site_url = ctx.get("PARAMETER_2")
 
-        embeds = cmk_discord.build_embeds(ctx, site_url)
+        embed = cmk_discord.Embed.from_context(ctx, site_url)
+        embed_dict = embed.to_dict()
 
-        self.assertEqual(len(embeds), 1)
-        self.assertIn("Host: webserver01", embeds[0]["title"])
+        self.assertIn("Host: webserver01", embed_dict["title"])
+        self.assertIsInstance(embed, cmk_discord.HostEmbed)
 
 
-class TestBuildWebhookContent(unittest.TestCase):
-    """Tests for build_webhook_content function"""
+class TestDiscordWebhook(unittest.TestCase):
+    """Tests for DiscordWebhook class"""
 
-    def test_build_webhook_content(self):
+    def test_webhook_payload(self):
         ctx = load_test_data("service/problem_critical.json")
         site_url = ctx.get("PARAMETER_2")
+        webhook_url = "https://discord.com/api/webhooks/123/abc"
 
-        content = cmk_discord.build_webhook_content(ctx, site_url)
+        embed = cmk_discord.Embed.from_context(ctx, site_url)
+        webhook = cmk_discord.DiscordWebhook(webhook_url, embed, ctx.get("OMD_SITE"))
+        content = webhook._build_payload()
 
         self.assertEqual(content["username"], "Checkmk - production")
         self.assertEqual(content["avatar_url"], "https://checkmk.com/android-chrome-192x192.png")
