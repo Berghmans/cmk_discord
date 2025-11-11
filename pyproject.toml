@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "cmk-discord"
-version = "1.0.0"
+version = "0.0.1"
 description = "Discord notification plugin for CheckMK"
-authors = ["Olivier Berghmans <olivier@cloudar.be>"]
+authors = ["Olivier Berghmans"]
 readme = "README.md"
 packages = [{include = "cmk_discord.py"}]
 
