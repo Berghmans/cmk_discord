@@ -1,0 +1,41 @@
+#!/usr/bin/env python3
+import unittest
+import sys
+import os
+from unittest.mock import patch
+
+# Add parent directory to path to import the module
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+import cmk_discord
+
+
+class TestBuildContext(unittest.TestCase):
+    """Tests for build_context function"""
+
+    @patch.dict(os.environ, {
+        "NOTIFY_HOSTNAME": "webserver01",
+        "NOTIFY_SERVICESTATE": "CRITICAL",
+        "NOTIFY_PARAMETER_1": "https://discord.com/api/webhooks/123",
+        "OTHER_VAR": "should_not_appear",
+        "NOTIFY_OMD_SITE": "production"
+    })
+    def test_build_context(self):
+        ctx = cmk_discord.build_context()
+
+        self.assertEqual(ctx["HOSTNAME"], "webserver01")
+        self.assertEqual(ctx["SERVICESTATE"], "CRITICAL")
+        self.assertEqual(ctx["PARAMETER_1"], "https://discord.com/api/webhooks/123")
+        self.assertEqual(ctx["OMD_SITE"], "production")
+        self.assertNotIn("OTHER_VAR", ctx)
+        self.assertNotIn("NOTIFY_HOSTNAME", ctx)  # Prefix should be stripped
+
+    @patch.dict(os.environ, {}, clear=True)
+    def test_build_context_empty(self):
+        ctx = cmk_discord.build_context()
+
+        self.assertEqual(ctx, {})
+
+
+if __name__ == '__main__':
+    unittest.main()
