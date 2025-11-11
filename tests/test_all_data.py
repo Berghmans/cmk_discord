@@ -13,6 +13,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 import cmk_discord
 from tests.test_data_loader import (
     load_test_data,
+    load_test_context,
     generate_test_params_for_all_versions,
     get_available_versions
 )
@@ -39,13 +40,12 @@ class TestAllServiceData(unittest.TestCase):
         for version, filepath, filename in self.test_params:
             test_label = f"[{version}] {filepath}"
             with self.subTest(test=test_label):
-                ctx = load_test_data(filepath, version=version)
-                site_url = ctx.get("PARAMETER_2")
-                timestamp = str(ctx.get("SHORTDATETIME", "2025-01-15T10:30:00")) + "+00:00"
+                ctx = load_test_context(filepath, version=version)
+                timestamp = str(ctx.short_datetime or "2025-01-15T10:30:00") + "+00:00"
 
                 # Should generate embeds without errors
                 try:
-                    embeds = [cmk_discord.ServiceEmbed(ctx, site_url, timestamp).to_dict()]
+                    embeds = [cmk_discord.ServiceEmbed(ctx, timestamp).to_dict()]
                 except Exception as e:
                     self.fail(f"Failed to generate embeds for {test_label}: {type(e).__name__}: {e}")
 
@@ -74,9 +74,9 @@ class TestAllServiceData(unittest.TestCase):
                 self.assertEqual(embed["fields"][1]["name"], "Service")
 
                 # If site_url provided, URL should be present
-                if site_url:
+                if ctx.site_url:
                     self.assertIn("url", embed)
-                    self.assertTrue(embed["url"].startswith(site_url))
+                    self.assertTrue(embed["url"].startswith(ctx.site_url))
 
 
 class TestAllHostData(unittest.TestCase):
@@ -100,13 +100,12 @@ class TestAllHostData(unittest.TestCase):
         for version, filepath, filename in self.test_params:
             test_label = f"[{version}] {filepath}"
             with self.subTest(test=test_label):
-                ctx = load_test_data(filepath, version=version)
-                site_url = ctx.get("PARAMETER_2")
-                timestamp = str(ctx.get("SHORTDATETIME", "2025-01-15T10:30:00")) + "+00:00"
+                ctx = load_test_context(filepath, version=version)
+                timestamp = str(ctx.short_datetime or "2025-01-15T10:30:00") + "+00:00"
 
                 # Should generate embeds without errors
                 try:
-                    embeds = [cmk_discord.HostEmbed(ctx, site_url, timestamp).to_dict()]
+                    embeds = [cmk_discord.HostEmbed(ctx, timestamp).to_dict()]
                 except Exception as e:
                     self.fail(f"Failed to generate embeds for {test_label}: {type(e).__name__}: {e}")
 
@@ -129,12 +128,12 @@ class TestAllHostData(unittest.TestCase):
                 self.assertIn(embed["color"], cmk_discord.ALERT_COLORS.values())
 
                 # Validate title contains hostname
-                self.assertIn(ctx["HOSTNAME"], embed["title"])
+                self.assertIn(ctx.hostname, embed["title"])
 
                 # If site_url provided, URL should be present
-                if site_url:
+                if ctx.site_url:
                     self.assertIn("url", embed)
-                    self.assertTrue(embed["url"].startswith(site_url))
+                    self.assertTrue(embed["url"].startswith(ctx.site_url))
 
 
 class TestAllWebhookContent(unittest.TestCase):
@@ -150,14 +149,13 @@ class TestAllWebhookContent(unittest.TestCase):
         for version, category, filepath, filename in self.test_params:
             test_label = f"[{version}] {filepath}"
             with self.subTest(test=test_label):
-                ctx = load_test_data(filepath, version=version)
-                site_url = ctx.get("PARAMETER_2")
+                ctx = load_test_context(filepath, version=version)
 
                 # Should generate webhook content without errors
                 try:
                     webhook_url = "https://discord.com/api/webhooks/123/abc"
-                    embed = cmk_discord.Embed.from_context(ctx, site_url)
-                    webhook = cmk_discord.DiscordWebhook(webhook_url, embed, ctx.get("OMD_SITE"))
+                    embed = cmk_discord.Embed.from_context(ctx)
+                    webhook = cmk_discord.DiscordWebhook(webhook_url, embed, ctx.omd_site)
                     content = webhook._build_payload()
                 except Exception as e:
                     self.fail(f"Failed to generate webhook content for {test_label}: {type(e).__name__}: {e}")
@@ -168,7 +166,7 @@ class TestAllWebhookContent(unittest.TestCase):
                 self.assertIn("embeds", content)
 
                 # Validate username contains site name
-                self.assertIn(ctx["OMD_SITE"], content["username"])
+                self.assertIn(ctx.omd_site, content["username"])
 
                 # Validate avatar URL
                 self.assertTrue(content["avatar_url"].startswith("https://"))

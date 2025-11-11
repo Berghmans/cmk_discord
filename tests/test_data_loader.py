@@ -4,8 +4,14 @@ Utility module for loading test data from JSON files.
 """
 import json
 import os
+import sys
 from pathlib import Path
 from typing import Dict, List
+
+# Add parent directory to path to import cmk_discord
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+import cmk_discord
 
 
 def get_data_dir(version: str = "2.2.0p21") -> Path:
@@ -90,6 +96,21 @@ def get_latest_version() -> str:
     return versions[0]  # First item is latest due to reverse sort
 
 
+def load_test_context(filename: str, version: str = "2.2.0p21") -> cmk_discord.Context:
+    """
+    Load test data and return as a Context object.
+
+    Args:
+        filename: Name of the JSON file (can include subdirectory like 'service/problem_critical.json')
+        version: CheckMK version (default: 2.2.0p21)
+
+    Returns:
+        Context object containing the test data
+    """
+    data = load_test_data(filename, version, strip_notify_prefix=True)
+    return cmk_discord.Context.from_dict(data)
+
+
 def load_latest_test_data(category: str, filename: str) -> Dict:
     """
     Load test data from the latest version that has the specified file.
@@ -112,6 +133,21 @@ def load_latest_test_data(category: str, filename: str) -> Dict:
             return load_test_data(filepath, version=version)
 
     raise FileNotFoundError(f"Test data file {category}/{filename} not found in any version")
+
+
+def load_latest_test_context(category: str, filename: str) -> cmk_discord.Context:
+    """
+    Load test data from the latest version and return as Context object.
+
+    Args:
+        category: 'service' or 'host'
+        filename: Name of the file (e.g., 'problem_critical.json')
+
+    Returns:
+        Context object containing the test data from the latest available version
+    """
+    data = load_latest_test_data(category, filename)
+    return cmk_discord.Context.from_dict(data)
 
 
 def get_all_test_cases(version: str = "2.2.0p21") -> Dict[str, List[str]]:

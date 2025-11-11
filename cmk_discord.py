@@ -9,8 +9,68 @@ import os
 import sys
 import datetime
 import requests
+from dataclasses import dataclass
 from enum import IntEnum
 from http import HTTPStatus
+from typing import Optional
+
+
+@dataclass
+class Context:
+    """CheckMK notification context"""
+    # Common fields
+    what: str  # SERVICE or HOST
+    notification_type: str
+    short_datetime: str
+    omd_site: str
+    hostname: str
+
+    # Optional parameters
+    webhook_url: Optional[str] = None  # PARAMETER_1
+    site_url: Optional[str] = None     # PARAMETER_2
+
+    # Service-specific fields
+    service_desc: Optional[str] = None
+    service_state: Optional[str] = None
+    previous_service_state: Optional[str] = None
+    service_output: Optional[str] = None
+    service_check_command: Optional[str] = None
+    service_url: Optional[str] = None
+
+    # Host-specific fields
+    host_state: Optional[str] = None
+    previous_host_state: Optional[str] = None
+    host_output: Optional[str] = None
+    host_check_command: Optional[str] = None
+    host_url: Optional[str] = None
+
+    # Optional comment
+    notification_comment: Optional[str] = None
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "Context":
+        """Create Context from environment variable dictionary"""
+        return cls(
+            what=data.get("WHAT", ""),
+            notification_type=data.get("NOTIFICATIONTYPE", ""),
+            short_datetime=data.get("SHORTDATETIME", ""),
+            omd_site=data.get("OMD_SITE", ""),
+            hostname=data.get("HOSTNAME", ""),
+            webhook_url=data.get("PARAMETER_1"),
+            site_url=data.get("PARAMETER_2"),
+            service_desc=data.get("SERVICEDESC"),
+            service_state=data.get("SERVICESTATE"),
+            previous_service_state=data.get("LASTSERVICESTATE") or data.get("PREVIOUSSERVICEHARDSTATE"),
+            service_output=data.get("SERVICEOUTPUT"),
+            service_check_command=data.get("SERVICECHECKCOMMAND"),
+            service_url=data.get("SERVICEURL"),
+            host_state=data.get("HOSTSTATE"),
+            previous_host_state=data.get("LASTHOSTSTATE") or data.get("PREVIOUSHOSTHARDSTATE"),
+            host_output=data.get("HOSTOUTPUT"),
+            host_check_command=data.get("HOSTCHECKCOMMAND"),
+            host_url=data.get("HOSTURL"),
+            notification_comment=data.get("NOTIFICATIONCOMMENT"),
+        )
 
 
 class DiscordColor(IntEnum):
@@ -54,34 +114,33 @@ def emoji_for_notification_type(notification_type: str):
 class Embed:
     """Base class for Discord embeds"""
 
-    def __init__(self, ctx: dict, site_url: str, timestamp: str):
+    def __init__(self, ctx: Context, timestamp: str):
         self.ctx = ctx
-        self.site_url = site_url
         self.timestamp = timestamp
 
     @classmethod
-    def from_context(cls, ctx: dict, site_url: str = None) -> "Embed":
+    def from_context(cls, ctx: Context) -> "Embed":
         """Factory method to create the appropriate embed type based on context"""
-        timestamp = str(datetime.datetime.fromisoformat(ctx["SHORTDATETIME"]).astimezone())
-        embed_class = ServiceEmbed if ctx.get("WHAT") == "SERVICE" else HostEmbed
-        return embed_class(ctx, site_url, timestamp)
+        timestamp = str(datetime.datetime.fromisoformat(ctx.short_datetime).astimezone())
+        embed_class = ServiceEmbed if ctx.what == "SERVICE" else HostEmbed
+        return embed_class(ctx, timestamp)
 
-    def _build_description(self, last_state_key: str, fallback_key: str, current_state_key: str, output_key: str) -> str:
+    def _build_description(self, previous_state: Optional[str], current_state: Optional[str], output: Optional[str]) -> str:
         """Build the embed description with state transition and output"""
         description = "**%s -> %s**\n\n%s" % (
-            self.ctx.get(last_state_key, self.ctx.get(fallback_key)),
-            self.ctx.get(current_state_key),
-            self.ctx.get(output_key),
+            previous_state,
+            current_state,
+            output,
         )
-        if len(self.ctx.get("NOTIFICATIONCOMMENT", "")) > 0:
-            description = "\n\n".join([description, self.ctx.get("NOTIFICATIONCOMMENT")])
+        if self.ctx.notification_comment:
+            description = "\n\n".join([description, self.ctx.notification_comment])
         return description
 
     def _build_title(self, subject: str) -> str:
         """Build the embed title with emoji and notification type"""
         return "%s%s: %s" % (
-            emoji_for_notification_type(self.ctx.get("NOTIFICATIONTYPE")),
-            self.ctx.get("NOTIFICATIONTYPE"),
+            emoji_for_notification_type(self.ctx.notification_type),
+            self.ctx.notification_type,
             subject,
         )
 
@@ -95,28 +154,27 @@ class ServiceEmbed(Embed):
 
     def to_dict(self) -> dict:
         description = self._build_description(
-            "LASTSERVICESTATE",
-            "PREVIOUSSERVICEHARDSTATE",
-            "SERVICESTATE",
-            "SERVICEOUTPUT"
+            self.ctx.previous_service_state,
+            self.ctx.service_state,
+            self.ctx.service_output
         )
 
         embed = {
-            "title": self._build_title(self.ctx.get("SERVICEDESC")),
+            "title": self._build_title(self.ctx.service_desc),
             "description": description,
-            "color": ALERT_COLORS[self.ctx.get("SERVICESTATE")],
+            "color": ALERT_COLORS[self.ctx.service_state],
             "fields": [
-                {"name": "Host", "value": self.ctx.get("HOSTNAME"), "inline": True},
-                {"name": "Service", "value": self.ctx.get("SERVICEDESC"), "inline": True},
+                {"name": "Host", "value": self.ctx.hostname, "inline": True},
+                {"name": "Service", "value": self.ctx.service_desc, "inline": True},
             ],
             "footer": {
-                "text": self.ctx.get("SERVICECHECKCOMMAND"),
+                "text": self.ctx.service_check_command,
             },
             "timestamp": self.timestamp,
         }
 
-        if self.site_url:
-            embed["url"] = "".join([self.site_url, self.ctx.get("SERVICEURL")])
+        if self.ctx.site_url:
+            embed["url"] = "".join([self.ctx.site_url, self.ctx.service_url])
         return embed
 
 
@@ -125,22 +183,21 @@ class HostEmbed(Embed):
 
     def to_dict(self) -> dict:
         description = self._build_description(
-            "LASTHOSTSTATE",
-            "PREVIOUSHOSTHARDSTATE",
-            "HOSTSTATE",
-            "HOSTOUTPUT"
+            self.ctx.previous_host_state,
+            self.ctx.host_state,
+            self.ctx.host_output
         )
 
         embed = {
-            "title": self._build_title("Host: %s" % self.ctx.get("HOSTNAME")),
+            "title": self._build_title("Host: %s" % self.ctx.hostname),
             "description": description,
-            "color": ALERT_COLORS[self.ctx.get("HOSTSTATE")],
-            "footer": {"text": self.ctx.get("HOSTCHECKCOMMAND")},
+            "color": ALERT_COLORS[self.ctx.host_state],
+            "footer": {"text": self.ctx.host_check_command},
             "timestamp": self.timestamp,
         }
 
-        if self.site_url:
-            embed["url"] = "".join([self.site_url, self.ctx.get("HOSTURL")])
+        if self.ctx.site_url:
+            embed["url"] = "".join([self.ctx.site_url, self.ctx.host_url])
         return embed
 
 
@@ -173,36 +230,36 @@ class DiscordWebhook:
             sys.exit(1)
 
 
-def build_context():
-    return {
+def build_context() -> Context:
+    """Build Context from environment variables"""
+    env_dict = {
         var[7:]: value
         for (var, value) in os.environ.items()
         if var.startswith("NOTIFY_")
     }
+    return Context.from_dict(env_dict)
 
 
 def main():
     ctx = build_context()
-    webhook_url = ctx.get("PARAMETER_1")
-    site_url = ctx.get("PARAMETER_2")
 
-    if not webhook_url:
+    if not ctx.webhook_url:
         sys.stderr.write("Empty webhook url given as parameter 1")
         sys.exit(2)
-    if not webhook_url.startswith("https://discord.com"):
+    if not ctx.webhook_url.startswith("https://discord.com"):
         sys.stderr.write(
             "Invalid Discord webhook url given as first parameter (not starting with https://discord.com )"
         )
         sys.exit(2)
-    if site_url and not site_url.startswith("http"):
+    if ctx.site_url and not ctx.site_url.startswith("http"):
         sys.stderr.write(
             "Invalid site url given as second parameter (not starting with http): %s"
-            % site_url
+            % ctx.site_url
         )
         sys.exit(2)
 
-    embed = Embed.from_context(ctx, site_url)
-    webhook = DiscordWebhook(webhook_url, embed, ctx.get("OMD_SITE"))
+    embed = Embed.from_context(ctx)
+    webhook = DiscordWebhook(ctx.webhook_url, embed, ctx.omd_site)
     webhook.send()
 
 
