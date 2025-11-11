@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.0.3](https://github.com/Berghmans/cmk_discord/compare/v0.0.2...v0.0.3) (2025-11-11)
+
+
+### Bug Fixes
+
+* also release py file ([01444bb](https://github.com/Berghmans/cmk_discord/commit/01444bbdd4881d8dece78bd9addfb23f40e76eae))
+* versioning ([f6ab60d](https://github.com/Berghmans/cmk_discord/commit/f6ab60da301b81204a9de55ec1cb6199d318dc88))
+
 ## [0.0.2](https://github.com/Berghmans/cmk_discord/compare/v0.0.2...v0.0.2) (2025-11-11)
 
 
