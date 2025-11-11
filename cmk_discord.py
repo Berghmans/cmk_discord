@@ -72,6 +72,16 @@ class Context:
             notification_comment=data.get("NOTIFICATIONCOMMENT"),
         )
 
+    @classmethod
+    def from_env(cls) -> "Context":
+        """Create Context from environment variables (NOTIFY_* variables)"""
+        env_dict = {
+            var[7:]: value
+            for (var, value) in os.environ.items()
+            if var.startswith("NOTIFY_")
+        }
+        return cls.from_dict(env_dict)
+
 
 class DiscordColor(IntEnum):
     GREEN = 5763719
@@ -243,18 +253,8 @@ class DiscordWebhook:
             sys.exit(1)
 
 
-def build_context() -> Context:
-    """Build Context from environment variables"""
-    env_dict = {
-        var[7:]: value
-        for (var, value) in os.environ.items()
-        if var.startswith("NOTIFY_")
-    }
-    return Context.from_dict(env_dict)
-
-
 def main():
-    ctx = build_context()
+    ctx = Context.from_env()
 
     if not ctx.webhook_url:
         sys.stderr.write("Empty webhook url given as parameter 1")

@@ -13,7 +13,6 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 import cmk_discord
 from tests.test_data_loader import (
     load_test_data,
-    load_test_context,
     generate_test_params_for_all_versions,
     get_available_versions
 )
@@ -40,7 +39,7 @@ class TestAllServiceData(unittest.TestCase):
         for version, filepath, filename in self.test_params:
             test_label = f"[{version}] {filepath}"
             with self.subTest(test=test_label):
-                ctx = load_test_context(filepath, version=version)
+                ctx = load_test_data(filepath, version=version)
                 timestamp = str(ctx.short_datetime or "2025-01-15T10:30:00") + "+00:00"
 
                 # Should generate embeds without errors
@@ -100,7 +99,7 @@ class TestAllHostData(unittest.TestCase):
         for version, filepath, filename in self.test_params:
             test_label = f"[{version}] {filepath}"
             with self.subTest(test=test_label):
-                ctx = load_test_context(filepath, version=version)
+                ctx = load_test_data(filepath, version=version)
                 timestamp = str(ctx.short_datetime or "2025-01-15T10:30:00") + "+00:00"
 
                 # Should generate embeds without errors
@@ -152,7 +151,7 @@ class TestAllWebhookContent(unittest.TestCase):
         for version, category, filepath, filename in self.test_params:
             test_label = f"[{version}] {filepath}"
             with self.subTest(test=test_label):
-                ctx = load_test_context(filepath, version=version)
+                ctx = load_test_data(filepath, version=version)
 
                 # Should generate webhook content without errors
                 try:

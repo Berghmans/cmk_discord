@@ -16,7 +16,7 @@ data/
 
 Each JSON file represents the raw environment variables as they would be passed from CheckMK to the notification script.
 
-**Important:** The keys in the JSON files **MUST** have the `NOTIFY_` prefix, exactly as CheckMK passes them. The test data loader (`load_test_data()`) will automatically strip the prefix when loading, simulating what `build_context()` does in the actual script (lines 127-132 of `cmk_discord.py`).
+**Important:** The keys in the JSON files **MUST** have the `NOTIFY_` prefix, exactly as CheckMK passes them. The test data loader (`load_test_data()`) will automatically strip the prefix when loading, simulating what `Context.from_env()` does in the actual script.
 
 ### Example Service Notification
 

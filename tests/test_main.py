@@ -8,18 +8,18 @@ from unittest.mock import patch
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import cmk_discord
-from tests.test_data_loader import load_latest_test_context
+from tests.test_data_loader import load_latest_test_data
 
 
 class TestMain(unittest.TestCase):
     """Tests for main function"""
 
     @patch('requests.post')
-    @patch('cmk_discord.build_context')
-    def test_main_success(self, mock_build_context, mock_requests_post):
+    @patch('cmk_discord.Context.from_env')
+    def test_main_success(self, mock_from_env, mock_requests_post):
         # Load test data from the latest version
-        ctx = load_latest_test_context("service", "problem_critical.json")
-        mock_build_context.return_value = ctx
+        ctx = load_latest_test_data("service", "problem_critical.json")
+        mock_from_env.return_value = ctx
 
         # Mock successful webhook response
         mock_response = unittest.mock.MagicMock()
@@ -31,8 +31,8 @@ class TestMain(unittest.TestCase):
         mock_requests_post.assert_called_once()
 
     @patch('sys.stderr.write')
-    @patch('cmk_discord.build_context')
-    def test_main_empty_webhook_url(self, mock_build_context, mock_stderr):
+    @patch('cmk_discord.Context.from_env')
+    def test_main_empty_webhook_url(self, mock_from_env, mock_stderr):
         ctx = cmk_discord.Context(
             what="SERVICE",
             notification_type="PROBLEM",
@@ -42,7 +42,7 @@ class TestMain(unittest.TestCase):
             webhook_url="",
             site_url="https://monitoring.example.com"
         )
-        mock_build_context.return_value = ctx
+        mock_from_env.return_value = ctx
 
         with self.assertRaises(SystemExit) as cm:
             cmk_discord.main()
@@ -52,8 +52,8 @@ class TestMain(unittest.TestCase):
         self.assertIn("Empty webhook url", mock_stderr.call_args[0][0])
 
     @patch('sys.stderr.write')
-    @patch('cmk_discord.build_context')
-    def test_main_missing_webhook_url(self, mock_build_context, mock_stderr):
+    @patch('cmk_discord.Context.from_env')
+    def test_main_missing_webhook_url(self, mock_from_env, mock_stderr):
         ctx = cmk_discord.Context(
             what="SERVICE",
             notification_type="PROBLEM",
@@ -63,7 +63,7 @@ class TestMain(unittest.TestCase):
             webhook_url=None,
             site_url="https://monitoring.example.com"
         )
-        mock_build_context.return_value = ctx
+        mock_from_env.return_value = ctx
 
         with self.assertRaises(SystemExit) as cm:
             cmk_discord.main()
@@ -72,8 +72,8 @@ class TestMain(unittest.TestCase):
         mock_stderr.assert_called_once()
 
     @patch('sys.stderr.write')
-    @patch('cmk_discord.build_context')
-    def test_main_invalid_webhook_url(self, mock_build_context, mock_stderr):
+    @patch('cmk_discord.Context.from_env')
+    def test_main_invalid_webhook_url(self, mock_from_env, mock_stderr):
         ctx = cmk_discord.Context(
             what="SERVICE",
             notification_type="PROBLEM",
@@ -83,7 +83,7 @@ class TestMain(unittest.TestCase):
             webhook_url="https://invalid.com/webhook",
             site_url="https://monitoring.example.com"
         )
-        mock_build_context.return_value = ctx
+        mock_from_env.return_value = ctx
 
         with self.assertRaises(SystemExit) as cm:
             cmk_discord.main()
@@ -93,8 +93,8 @@ class TestMain(unittest.TestCase):
         self.assertIn("Invalid Discord webhook url", mock_stderr.call_args[0][0])
 
     @patch('sys.stderr.write')
-    @patch('cmk_discord.build_context')
-    def test_main_invalid_site_url(self, mock_build_context, mock_stderr):
+    @patch('cmk_discord.Context.from_env')
+    def test_main_invalid_site_url(self, mock_from_env, mock_stderr):
         ctx = cmk_discord.Context(
             what="SERVICE",
             notification_type="PROBLEM",
@@ -104,7 +104,7 @@ class TestMain(unittest.TestCase):
             webhook_url="https://discord.com/api/webhooks/123",
             site_url="not-a-url"
         )
-        mock_build_context.return_value = ctx
+        mock_from_env.return_value = ctx
 
         with self.assertRaises(SystemExit) as cm:
             cmk_discord.main()
@@ -114,12 +114,12 @@ class TestMain(unittest.TestCase):
         self.assertIn("Invalid site url", mock_stderr.call_args[0][0])
 
     @patch('requests.post')
-    @patch('cmk_discord.build_context')
-    def test_main_without_site_url(self, mock_build_context, mock_requests_post):
+    @patch('cmk_discord.Context.from_env')
+    def test_main_without_site_url(self, mock_from_env, mock_requests_post):
         # Load test data from the latest version and remove site URL
-        ctx = load_latest_test_context("service", "problem_critical.json")
+        ctx = load_latest_test_data("service", "problem_critical.json")
         ctx.site_url = None  # Remove site URL to test without it
-        mock_build_context.return_value = ctx
+        mock_from_env.return_value = ctx
 
         # Mock successful webhook response
         mock_response = unittest.mock.MagicMock()

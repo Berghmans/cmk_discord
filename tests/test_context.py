@@ -10,8 +10,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 import cmk_discord
 
 
-class TestBuildContext(unittest.TestCase):
-    """Tests for build_context function"""
+class TestContextFromEnv(unittest.TestCase):
+    """Tests for Context.from_env() class method"""
 
     @patch.dict(os.environ, {
         "NOTIFY_HOSTNAME": "webserver01",
@@ -23,8 +23,8 @@ class TestBuildContext(unittest.TestCase):
         "NOTIFY_NOTIFICATIONTYPE": "PROBLEM",
         "NOTIFY_SHORTDATETIME": "2025-01-15T10:30:00"
     })
-    def test_build_context(self):
-        ctx = cmk_discord.build_context()
+    def test_from_env(self):
+        ctx = cmk_discord.Context.from_env()
 
         self.assertIsInstance(ctx, cmk_discord.Context)
         self.assertEqual(ctx.hostname, "webserver01")
@@ -35,8 +35,8 @@ class TestBuildContext(unittest.TestCase):
         self.assertEqual(ctx.notification_type, "PROBLEM")
 
     @patch.dict(os.environ, {}, clear=True)
-    def test_build_context_empty(self):
-        ctx = cmk_discord.build_context()
+    def test_from_env_empty(self):
+        ctx = cmk_discord.Context.from_env()
 
         self.assertIsInstance(ctx, cmk_discord.Context)
         self.assertEqual(ctx.what, "")

@@ -20,17 +20,16 @@ def get_data_dir(version: str = "2.2.0p21") -> Path:
     return tests_dir / "data" / version
 
 
-def load_test_data(filename: str, version: str = "2.2.0p21", strip_notify_prefix: bool = True) -> Dict:
+def load_test_data(filename: str, version: str = "2.2.0p21") -> cmk_discord.Context:
     """
-    Load test data from a JSON file.
+    Load test data from a JSON file and return as Context object.
 
     Args:
         filename: Name of the JSON file (can include subdirectory like 'service/problem_critical.json')
         version: CheckMK version (default: 2.2.0p21)
-        strip_notify_prefix: If True, strip 'NOTIFY_' prefix from keys (simulates build_context())
 
     Returns:
-        Dictionary containing the test data context
+        Context object containing the test data
     """
     data_dir = get_data_dir(version)
     file_path = data_dir / filename
@@ -41,14 +40,13 @@ def load_test_data(filename: str, version: str = "2.2.0p21", strip_notify_prefix
     with open(file_path, 'r') as f:
         data = json.load(f)
 
-    if strip_notify_prefix:
-        # Simulate what build_context() does: strip NOTIFY_ prefix
-        return {
-            key[7:] if key.startswith("NOTIFY_") else key: value
-            for key, value in data.items()
-        }
+    # Strip NOTIFY_ prefix (simulates what Context.from_env() does)
+    stripped_data = {
+        key[7:] if key.startswith("NOTIFY_") else key: value
+        for key, value in data.items()
+    }
 
-    return data
+    return cmk_discord.Context.from_dict(stripped_data)
 
 
 def list_test_data_files(category: str = None, version: str = "2.2.0p21") -> List[str]:
@@ -96,22 +94,7 @@ def get_latest_version() -> str:
     return versions[0]  # First item is latest due to reverse sort
 
 
-def load_test_context(filename: str, version: str = "2.2.0p21") -> cmk_discord.Context:
-    """
-    Load test data and return as a Context object.
-
-    Args:
-        filename: Name of the JSON file (can include subdirectory like 'service/problem_critical.json')
-        version: CheckMK version (default: 2.2.0p21)
-
-    Returns:
-        Context object containing the test data
-    """
-    data = load_test_data(filename, version, strip_notify_prefix=True)
-    return cmk_discord.Context.from_dict(data)
-
-
-def load_latest_test_data(category: str, filename: str) -> Dict:
+def load_latest_test_data(category: str, filename: str) -> cmk_discord.Context:
     """
     Load test data from the latest version that has the specified file.
 
@@ -120,7 +103,7 @@ def load_latest_test_data(category: str, filename: str) -> Dict:
         filename: Name of the file (e.g., 'problem_critical.json')
 
     Returns:
-        Dictionary containing the test data context from the latest available version
+        Context object containing the test data from the latest available version
     """
     versions = get_available_versions()
 
@@ -133,21 +116,6 @@ def load_latest_test_data(category: str, filename: str) -> Dict:
             return load_test_data(filepath, version=version)
 
     raise FileNotFoundError(f"Test data file {category}/{filename} not found in any version")
-
-
-def load_latest_test_context(category: str, filename: str) -> cmk_discord.Context:
-    """
-    Load test data from the latest version and return as Context object.
-
-    Args:
-        category: 'service' or 'host'
-        filename: Name of the file (e.g., 'problem_critical.json')
-
-    Returns:
-        Context object containing the test data from the latest available version
-    """
-    data = load_latest_test_data(category, filename)
-    return cmk_discord.Context.from_dict(data)
 
 
 def get_all_test_cases(version: str = "2.2.0p21") -> Dict[str, List[str]]:

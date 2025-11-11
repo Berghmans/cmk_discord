@@ -9,7 +9,7 @@ from http import HTTPStatus
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import cmk_discord
-from tests.test_data_loader import load_latest_test_context
+from tests.test_data_loader import load_latest_test_data
 
 
 class TestDiscordWebhookSend(unittest.TestCase):
@@ -21,7 +21,7 @@ class TestDiscordWebhookSend(unittest.TestCase):
         mock_response.status_code = HTTPStatus.NO_CONTENT.value
         mock_post.return_value = mock_response
 
-        ctx = load_latest_test_context("service", "problem_critical.json")
+        ctx = load_latest_test_data("service", "problem_critical.json")
         webhook_url = "https://discord.com/api/webhooks/123/abc"
 
         embed = cmk_discord.Embed.from_context(ctx)
@@ -43,7 +43,7 @@ class TestDiscordWebhookSend(unittest.TestCase):
         mock_response.text = "Bad Request"
         mock_post.return_value = mock_response
 
-        ctx = load_latest_test_context("service", "problem_critical.json")
+        ctx = load_latest_test_data("service", "problem_critical.json")
         webhook_url = "https://discord.com/api/webhooks/123/abc"
 
         embed = cmk_discord.Embed.from_context(ctx)
