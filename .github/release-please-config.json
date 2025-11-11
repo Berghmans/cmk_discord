@@ -19,8 +19,7 @@
         },
         {
           "type": "generic",
-          "path": "src/info",
-          "glob": false
+          "path": "src/info"
         }
       ]
     }
