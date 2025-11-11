@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "cmk-discord"
+version = "0.0.1"
+description = "Discord notification plugin for CheckMK"
+authors = ["Olivier Berghmans"]
+readme = "README.md"
+packages = [{include = "cmk_discord.py"}]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+requests = "^2.25.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.0"
+pytest-cov = "^4.1.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]

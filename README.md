@@ -1,23 +1,18 @@
 # cmk_discord - Checkmk Discord Notifications
 
-## :warning: Attention
-
-I currently don't have time to work on this project. At the moment I don't even have a CheckMK instance running anywhere. Therefore, I cannot do any releases.
-
-**If someone wants to take over the plugin, please let me know and I transfer the ownership.** 
-
----
-
 [![GitHub Release](https://img.shields.io/github/v/release/fschlag/cmk_discord)](https://github.com/fschlag/cmk_discord/releases)
 ![Static Badge](https://img.shields.io/badge/Tested%20with%20Checkmk-2.2.0p21-neon)
 [![Static Badge](https://img.shields.io/badge/Link%20to-Checkmk%20Exchange-green)](https://exchange.checkmk.com/p/discord)
 
 Discord notification plugin for Checkmk monitoring platform.
 
-:warning: _Disclaimer: This is not an official plugin of Checkmk! It's a side project I've developed for my homelab
-notifications._
+:warning: _Disclaimer: This is not an official plugin of Checkmk!_
 
-:clap: inspired by the Discord notification plugin of [n00rm](https://github.com/n00rm) that was created as a GitHub
+## Acknowledgements
+
+:clap: This project was originally created by [@fschlag](https://github.com/fschlag). Thank you for the excellent foundation and initial work on this plugin!
+
+:clap: Inspired by the Discord notification plugin of [n00rm](https://github.com/n00rm) that was created as a GitHub
 gist a while ago: https://gist.github.com/n00rm/32f1334b1dd2efc40122fee36551ef17
 _(unfortunately only as a gist so I couldn't extend it via PR)_
 

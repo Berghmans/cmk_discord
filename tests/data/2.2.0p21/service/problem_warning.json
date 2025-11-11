@@ -1,0 +1,16 @@
+{
+  "NOTIFY_WHAT": "SERVICE",
+  "NOTIFY_NOTIFICATIONTYPE": "PROBLEM",
+  "NOTIFY_HOSTNAME": "database01",
+  "NOTIFY_SERVICEDESC": "Disk /var",
+  "NOTIFY_SERVICESTATE": "WARNING",
+  "NOTIFY_LASTSERVICESTATE": "OK",
+  "NOTIFY_SERVICEOUTPUT": "DISK WARNING - free space: /var 2048 MB (15% inode=89%)",
+  "NOTIFY_SERVICECHECKCOMMAND": "check_disk",
+  "NOTIFY_SERVICEURL": "/check_mk/view.py?host=database01&service=Disk+%2Fvar",
+  "NOTIFY_SHORTDATETIME": "2025-01-15T14:20:00",
+  "NOTIFY_NOTIFICATIONCOMMENT": "This is the notifcation comment",
+  "NOTIFY_OMD_SITE": "production",
+  "NOTIFY_PARAMETER_1": "https://discord.com/api/webhooks/123456789/abcdefghijklmnop",
+  "NOTIFY_PARAMETER_2": "https://checkmkhost.mycompany.com/my_monitoring"
+}

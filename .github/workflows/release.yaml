@@ -1,0 +1,53 @@
+---
+name: release
+on: # yamllint disable-line rule:truthy
+  workflow_run:
+    workflows: ["checks"]
+    types:
+      - completed
+    branches:
+      - main
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    permissions:
+      contents: write
+      pull-requests: write
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: googleapis/release-please-action@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          release-type: python
+        id: release
+
+  publish:
+    runs-on: ubuntu-latest
+    needs: release
+    if: ${{ needs.release.outputs.release_created }}
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Prepare MKP structure
+        run: |
+          mkdir -p local/share/check_mk/notifications
+          cp cmk_discord.py local/share/check_mk/notifications/
+
+      - name: Build MKP
+        uses: oposs/mkp-builder@v2
+        with:
+          version: ${{ needs.release.outputs.tag_name }}
+        id: mkp
+
+      - name: Upload MKP package
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.release.outputs.tag_name }}
+          files: ${{ steps.mkp.outputs.package-file }}

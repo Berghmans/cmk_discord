@@ -1,0 +1,16 @@
+{
+  "NOTIFY_WHAT": "SERVICE",
+  "NOTIFY_NOTIFICATIONTYPE": "RECOVERY",
+  "NOTIFY_HOSTNAME": "webserver01",
+  "NOTIFY_SERVICEDESC": "HTTP",
+  "NOTIFY_SERVICESTATE": "OK",
+  "NOTIFY_LASTSERVICESTATE": "CRITICAL",
+  "NOTIFY_SERVICEOUTPUT": "HTTP OK: HTTP/1.1 200 OK - 1234 bytes in 0.123 second response time",
+  "NOTIFY_SERVICECHECKCOMMAND": "check_http",
+  "NOTIFY_SERVICEURL": "/check_mk/view.py?host=webserver01&service=HTTP",
+  "NOTIFY_SHORTDATETIME": "2025-01-15T11:00:00",
+  "NOTIFY_NOTIFICATIONCOMMENT": "This is the notifcation comment",
+  "NOTIFY_OMD_SITE": "production",
+  "NOTIFY_PARAMETER_1": "https://discord.com/api/webhooks/123456789/abcdefghijklmnop",
+  "NOTIFY_PARAMETER_2": "https://checkmkhost.mycompany.com/my_monitoring"
+}
