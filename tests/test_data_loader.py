@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Dict, List
 
 # Add parent directory to path to import cmk_discord
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src', 'notifications')))
 
 import cmk_discord
 

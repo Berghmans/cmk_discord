@@ -39,20 +39,14 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v5
-
-      - name: Prepare MKP structure
-        run: |
-          mkdir -p local/share/check_mk/notifications
-          cp cmk_discord.py local/share/check_mk/notifications/
-
-      - name: Build MKP
-        uses: oposs/mkp-builder@v2
         with:
-          version: ${{ needs.release.outputs.version }}
-        id: mkp
+          ref: ${{ needs.release.outputs.tag_name }}
+
+      - name: Build MKP package
+        run: ./scripts/build-mkp.sh ${{ needs.release.outputs.version }}
 
       - name: Upload MKP package
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.release.outputs.tag_name }}
-          files: ${{ steps.mkp.outputs.package-file }}
+          files: discord-${{ needs.release.outputs.version }}.mkp

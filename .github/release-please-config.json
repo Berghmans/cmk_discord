@@ -11,6 +11,16 @@
           "type": "toml",
           "path": "pyproject.toml",
           "jsonpath": "$.tool.poetry.version"
+        },
+        {
+          "type": "json",
+          "path": "src/info.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "generic",
+          "path": "src/info",
+          "glob": false
         }
       ]
     }

@@ -5,7 +5,7 @@ import os
 from unittest.mock import patch
 
 # Add parent directory to path to import the module
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src', 'notifications')))
 
 import cmk_discord
 
