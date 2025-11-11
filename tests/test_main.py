@@ -8,6 +8,7 @@ from unittest.mock import patch
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import cmk_discord
+from tests.test_data_loader import load_latest_test_data
 
 
 class TestMain(unittest.TestCase):
@@ -16,21 +17,9 @@ class TestMain(unittest.TestCase):
     @patch('cmk_discord.post_webhook')
     @patch('cmk_discord.build_context')
     def test_main_success(self, mock_build_context, mock_post_webhook):
-        mock_build_context.return_value = {
-            "PARAMETER_1": "https://discord.com/api/webhooks/123",
-            "PARAMETER_2": "https://monitoring.example.com",
-            "OMD_SITE": "production",
-            "WHAT": "SERVICE",
-            "SHORTDATETIME": "2025-01-15T10:30:00",
-            "LASTSERVICESTATE": "OK",
-            "SERVICESTATE": "CRITICAL",
-            "SERVICEOUTPUT": "Error",
-            "NOTIFICATIONTYPE": "PROBLEM",
-            "SERVICEDESC": "HTTP",
-            "HOSTNAME": "host01",
-            "SERVICECHECKCOMMAND": "check_http",
-            "SERVICEURL": "/service",
-        }
+        # Load test data from the latest version
+        ctx = load_latest_test_data("service", "problem_critical.json")
+        mock_build_context.return_value = ctx
 
         cmk_discord.main()
 
@@ -97,20 +86,10 @@ class TestMain(unittest.TestCase):
     @patch('cmk_discord.post_webhook')
     @patch('cmk_discord.build_context')
     def test_main_without_site_url(self, mock_build_context, mock_post_webhook):
-        mock_build_context.return_value = {
-            "PARAMETER_1": "https://discord.com/api/webhooks/123",
-            "OMD_SITE": "production",
-            "WHAT": "SERVICE",
-            "SHORTDATETIME": "2025-01-15T10:30:00",
-            "LASTSERVICESTATE": "OK",
-            "SERVICESTATE": "CRITICAL",
-            "SERVICEOUTPUT": "Error",
-            "NOTIFICATIONTYPE": "PROBLEM",
-            "SERVICEDESC": "HTTP",
-            "HOSTNAME": "host01",
-            "SERVICECHECKCOMMAND": "check_http",
-            "SERVICEURL": "/service",
-        }
+        # Load test data from the latest version and remove site URL
+        ctx = load_latest_test_data("service", "problem_critical.json")
+        ctx.pop("PARAMETER_2", None)  # Remove site URL to test without it
+        mock_build_context.return_value = ctx
 
         cmk_discord.main()
 

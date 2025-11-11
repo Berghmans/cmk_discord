@@ -3,7 +3,7 @@
   "NOTIFY_NOTIFICATIONTYPE": "DOWNTIMESTART",
   "NOTIFY_HOSTNAME": "webserver01",
   "NOTIFY_HOSTSTATE": "UP",
-  "NOTIFY_PREVIOUSHOSTHARDSTATE": "UP",
+  "NOTIFY_LASTHOSTSTATE": "UP",
   "NOTIFY_HOSTOUTPUT": "OK - Host reachable (192.168.1.100), round trip 0.123ms",
   "NOTIFY_HOSTCHECKCOMMAND": "check-host-alive",
   "NOTIFY_HOSTURL": "/check_mk/view.py?host=webserver01",

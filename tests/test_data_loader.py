@@ -79,4 +79,74 @@ def get_available_versions() -> List[str]:
         return []
 
     versions = [d.name for d in data_dir.iterdir() if d.is_dir() and not d.name.startswith('.')]
-    return sorted(versions)
+    return sorted(versions, reverse=True)  # Latest version first
+
+
+def get_latest_version() -> str:
+    """Get the latest (most recent) CheckMK version available."""
+    versions = get_available_versions()
+    if not versions:
+        raise ValueError("No test data versions found")
+    return versions[0]  # First item is latest due to reverse sort
+
+
+def load_latest_test_data(category: str, filename: str) -> Dict:
+    """
+    Load test data from the latest version that has the specified file.
+
+    Args:
+        category: 'service' or 'host'
+        filename: Name of the file (e.g., 'problem_critical.json')
+
+    Returns:
+        Dictionary containing the test data context from the latest available version
+    """
+    versions = get_available_versions()
+
+    for version in versions:
+        filepath = f"{category}/{filename}"
+        data_dir = get_data_dir(version)
+        full_path = data_dir / filepath
+
+        if full_path.exists():
+            return load_test_data(filepath, version=version)
+
+    raise FileNotFoundError(f"Test data file {category}/{filename} not found in any version")
+
+
+def get_all_test_cases(version: str = "2.2.0p21") -> Dict[str, List[str]]:
+    """
+    Get all test cases organized by type.
+
+    Returns:
+        Dictionary with 'service' and 'host' keys containing lists of test file paths
+    """
+    test_cases = {"service": [], "host": []}
+
+    service_files = list_test_data_files("service", version)
+    host_files = list_test_data_files("host", version)
+
+    test_cases["service"] = service_files
+    test_cases["host"] = host_files
+
+    return test_cases
+
+
+def generate_test_params_for_all_versions():
+    """
+    Generate test parameters for all versions and all test files.
+
+    Returns:
+        List of tuples (version, category, filepath, filename) for parameterization
+    """
+    params = []
+    versions = get_available_versions()
+
+    for version in versions:
+        test_cases = get_all_test_cases(version)
+        for category, files in test_cases.items():
+            for filepath in files:
+                filename = Path(filepath).stem  # Get filename without extension
+                params.append((version, category, filepath, filename))
+
+    return params
