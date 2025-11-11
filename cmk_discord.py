@@ -51,70 +51,96 @@ def emoji_for_notification_type(notification_type: str):
     return ""
 
 
-def build_service_embeds(ctx, site_url, timestamp):
-    description = "**%s -> %s**\n\n%s" % (
-        ctx.get("LASTSERVICESTATE", ctx.get("PREVIOUSHOSTHARDSTATE")),
-        ctx.get("SERVICESTATE"),
-        ctx.get("SERVICEOUTPUT"),
-    )
-    if len(ctx.get("NOTIFICATIONCOMMENT", "")) > 0:
-        description = "\n\n".join([description, ctx.get("NOTIFICATIONCOMMENT")])
-    embed = {
-        "title": "%s%s: %s"
-                 % (
-                     emoji_for_notification_type(ctx.get("NOTIFICATIONTYPE")),
-                     ctx.get("NOTIFICATIONTYPE"),
-                     ctx.get("SERVICEDESC"),
-                 ),
-        "description": description,
-        "color": ALERT_COLORS[ctx.get("SERVICESTATE")],
-        "fields": [
-            {"name": "Host", "value": ctx.get("HOSTNAME"), "inline": True},
-            {"name": "Service", "value": ctx.get("SERVICEDESC"), "inline": True},
-        ],
-        "footer": {
-            "text": ctx.get("SERVICECHECKCOMMAND"),
-        },
-        "timestamp": timestamp,
-    }
+class Embed:
+    """Base class for Discord embeds"""
 
-    if site_url:
-        embed["url"] = "".join([site_url, ctx.get("SERVICEURL")])
-    return [embed]
+    def __init__(self, ctx: dict, site_url: str, timestamp: str):
+        self.ctx = ctx
+        self.site_url = site_url
+        self.timestamp = timestamp
+
+    def _build_description(self, last_state_key: str, fallback_key: str, current_state_key: str, output_key: str) -> str:
+        """Build the embed description with state transition and output"""
+        description = "**%s -> %s**\n\n%s" % (
+            self.ctx.get(last_state_key, self.ctx.get(fallback_key)),
+            self.ctx.get(current_state_key),
+            self.ctx.get(output_key),
+        )
+        if len(self.ctx.get("NOTIFICATIONCOMMENT", "")) > 0:
+            description = "\n\n".join([description, self.ctx.get("NOTIFICATIONCOMMENT")])
+        return description
+
+    def _build_title(self, subject: str) -> str:
+        """Build the embed title with emoji and notification type"""
+        return "%s%s: %s" % (
+            emoji_for_notification_type(self.ctx.get("NOTIFICATIONTYPE")),
+            self.ctx.get("NOTIFICATIONTYPE"),
+            subject,
+        )
+
+    def to_dict(self) -> dict:
+        """Convert embed to dictionary format for Discord API"""
+        raise NotImplementedError("Subclasses must implement to_dict()")
 
 
-def build_host_embeds(ctx, site_url, timestamp):
-    description = "**%s -> %s**\n\n%s" % (
-        ctx.get("LASTHOSTSTATE", ctx.get("PREVIOUSHOSTHARDSTATE")),
-        ctx.get("HOSTSTATE"),
-        ctx.get("HOSTOUTPUT"),
-    )
-    if len(ctx.get("NOTIFICATIONCOMMENT", "")) > 0:
-        description = "\n\n".join([description, ctx.get("NOTIFICATIONCOMMENT")])
-    embed = {
-        "title": "%s%s: Host: %s"
-                 % (
-                     emoji_for_notification_type(ctx.get("NOTIFICATIONTYPE")),
-                     ctx.get("NOTIFICATIONTYPE"),
-                     ctx.get("HOSTNAME"),
-                 ),
-        "description": description,
-        "color": ALERT_COLORS[ctx.get("HOSTSTATE")],
-        "footer": {"text": ctx.get("HOSTCHECKCOMMAND")},
-        "timestamp": timestamp,
-    }
-    if site_url:
-        embed["url"] = "".join([site_url, ctx.get("HOSTURL")])
-    return [embed]
+class ServiceEmbed(Embed):
+    """Discord embed for service notifications"""
+
+    def to_dict(self) -> dict:
+        description = self._build_description(
+            "LASTSERVICESTATE",
+            "PREVIOUSSERVICEHARDSTATE",
+            "SERVICESTATE",
+            "SERVICEOUTPUT"
+        )
+
+        embed = {
+            "title": self._build_title(self.ctx.get("SERVICEDESC")),
+            "description": description,
+            "color": ALERT_COLORS[self.ctx.get("SERVICESTATE")],
+            "fields": [
+                {"name": "Host", "value": self.ctx.get("HOSTNAME"), "inline": True},
+                {"name": "Service", "value": self.ctx.get("SERVICEDESC"), "inline": True},
+            ],
+            "footer": {
+                "text": self.ctx.get("SERVICECHECKCOMMAND"),
+            },
+            "timestamp": self.timestamp,
+        }
+
+        if self.site_url:
+            embed["url"] = "".join([self.site_url, self.ctx.get("SERVICEURL")])
+        return embed
+
+
+class HostEmbed(Embed):
+    """Discord embed for host notifications"""
+
+    def to_dict(self) -> dict:
+        description = self._build_description(
+            "LASTHOSTSTATE",
+            "PREVIOUSHOSTHARDSTATE",
+            "HOSTSTATE",
+            "HOSTOUTPUT"
+        )
+
+        embed = {
+            "title": self._build_title("Host: %s" % self.ctx.get("HOSTNAME")),
+            "description": description,
+            "color": ALERT_COLORS[self.ctx.get("HOSTSTATE")],
+            "footer": {"text": self.ctx.get("HOSTCHECKCOMMAND")},
+            "timestamp": self.timestamp,
+        }
+
+        if self.site_url:
+            embed["url"] = "".join([self.site_url, self.ctx.get("HOSTURL")])
+        return embed
 
 
 def build_embeds(ctx, site_url):
     timestamp = str(datetime.datetime.fromisoformat(ctx["SHORTDATETIME"]).astimezone())
-    return (
-        build_service_embeds(ctx, site_url, timestamp)
-        if ctx.get("WHAT") == "SERVICE"
-        else build_host_embeds(ctx, site_url, timestamp)
-    )
+    embed_class = ServiceEmbed if ctx.get("WHAT") == "SERVICE" else HostEmbed
+    return [embed_class(ctx, site_url, timestamp).to_dict()]
 
 
 def build_webhook_content(ctx, site_url):

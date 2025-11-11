@@ -45,7 +45,7 @@ class TestAllServiceData(unittest.TestCase):
 
                 # Should generate embeds without errors
                 try:
-                    embeds = cmk_discord.build_service_embeds(ctx, site_url, timestamp)
+                    embeds = [cmk_discord.ServiceEmbed(ctx, site_url, timestamp).to_dict()]
                 except Exception as e:
                     self.fail(f"Failed to generate embeds for {test_label}: {type(e).__name__}: {e}")
 
@@ -106,7 +106,7 @@ class TestAllHostData(unittest.TestCase):
 
                 # Should generate embeds without errors
                 try:
-                    embeds = cmk_discord.build_host_embeds(ctx, site_url, timestamp)
+                    embeds = [cmk_discord.HostEmbed(ctx, site_url, timestamp).to_dict()]
                 except Exception as e:
                     self.fail(f"Failed to generate embeds for {test_label}: {type(e).__name__}: {e}")
 

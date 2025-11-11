@@ -11,7 +11,7 @@ from tests.test_data_loader import load_test_data
 
 
 class TestBuildServiceEmbeds(unittest.TestCase):
-    """Tests for build_service_embeds function"""
+    """Tests for ServiceEmbed class"""
 
     def setUp(self):
         self.ctx = load_test_data("service/problem_critical.json")
@@ -19,7 +19,7 @@ class TestBuildServiceEmbeds(unittest.TestCase):
         self.timestamp = "2025-01-15T10:30:00+00:00"
 
     def test_build_service_embeds_basic(self):
-        embeds = cmk_discord.build_service_embeds(self.ctx, self.site_url, self.timestamp)
+        embeds = [cmk_discord.ServiceEmbed(self.ctx, self.site_url, self.timestamp).to_dict()]
 
         self.assertEqual(len(embeds), 1)
         embed = embeds[0]
@@ -34,13 +34,13 @@ class TestBuildServiceEmbeds(unittest.TestCase):
     def test_build_service_embeds_with_comment(self):
         ctx = load_test_data("service/acknowledgement.json")
         site_url = ctx.get("PARAMETER_2")
-        embeds = cmk_discord.build_service_embeds(ctx, site_url, self.timestamp)
+        embeds = [cmk_discord.ServiceEmbed(ctx, site_url, self.timestamp).to_dict()]
 
         embed = embeds[0]
         self.assertIn("Acknowledged by admin", embed["description"])
 
     def test_build_service_embeds_without_site_url(self):
-        embeds = cmk_discord.build_service_embeds(self.ctx, None, self.timestamp)
+        embeds = [cmk_discord.ServiceEmbed(self.ctx, None, self.timestamp).to_dict()]
 
         embed = embeds[0]
         self.assertNotIn("url", embed)
@@ -48,13 +48,13 @@ class TestBuildServiceEmbeds(unittest.TestCase):
     def test_build_service_embeds_warning_state(self):
         ctx = load_test_data("service/problem_warning.json")
         site_url = ctx.get("PARAMETER_2")
-        embeds = cmk_discord.build_service_embeds(ctx, site_url, self.timestamp)
+        embeds = [cmk_discord.ServiceEmbed(ctx, site_url, self.timestamp).to_dict()]
 
         embed = embeds[0]
         self.assertEqual(embed["color"], cmk_discord.ALERT_COLORS["WARNING"])
 
     def test_build_service_embeds_fields(self):
-        embeds = cmk_discord.build_service_embeds(self.ctx, self.site_url, self.timestamp)
+        embeds = [cmk_discord.ServiceEmbed(self.ctx, self.site_url, self.timestamp).to_dict()]
 
         embed = embeds[0]
         fields = embed["fields"]
@@ -67,7 +67,7 @@ class TestBuildServiceEmbeds(unittest.TestCase):
     def test_build_service_embeds_recovery(self):
         ctx = load_test_data("service/recovery_ok.json")
         site_url = ctx.get("PARAMETER_2")
-        embeds = cmk_discord.build_service_embeds(ctx, site_url, self.timestamp)
+        embeds = [cmk_discord.ServiceEmbed(ctx, site_url, self.timestamp).to_dict()]
 
         embed = embeds[0]
         self.assertEqual(embed["title"], ":white_check_mark: RECOVERY: HTTP")
@@ -76,7 +76,7 @@ class TestBuildServiceEmbeds(unittest.TestCase):
 
 
 class TestBuildHostEmbeds(unittest.TestCase):
-    """Tests for build_host_embeds function"""
+    """Tests for HostEmbed class"""
 
     def setUp(self):
         self.ctx = load_test_data("host/problem_down.json")
@@ -84,7 +84,7 @@ class TestBuildHostEmbeds(unittest.TestCase):
         self.timestamp = "2025-01-15T10:30:00+00:00"
 
     def test_build_host_embeds_basic(self):
-        embeds = cmk_discord.build_host_embeds(self.ctx, self.site_url, self.timestamp)
+        embeds = [cmk_discord.HostEmbed(self.ctx, self.site_url, self.timestamp).to_dict()]
 
         self.assertEqual(len(embeds), 1)
         embed = embeds[0]
@@ -99,13 +99,13 @@ class TestBuildHostEmbeds(unittest.TestCase):
     def test_build_host_embeds_with_comment(self):
         ctx = load_test_data("host/downtime_start.json")
         site_url = ctx.get("PARAMETER_2")
-        embeds = cmk_discord.build_host_embeds(ctx, site_url, self.timestamp)
+        embeds = [cmk_discord.HostEmbed(ctx, site_url, self.timestamp).to_dict()]
 
         embed = embeds[0]
         self.assertIn("Scheduled maintenance", embed["description"])
 
     def test_build_host_embeds_without_site_url(self):
-        embeds = cmk_discord.build_host_embeds(self.ctx, None, self.timestamp)
+        embeds = [cmk_discord.HostEmbed(self.ctx, None, self.timestamp).to_dict()]
 
         embed = embeds[0]
         self.assertNotIn("url", embed)
@@ -113,13 +113,13 @@ class TestBuildHostEmbeds(unittest.TestCase):
     def test_build_host_embeds_unreachable_state(self):
         ctx = load_test_data("host/unreachable.json")
         site_url = ctx.get("PARAMETER_2")
-        embeds = cmk_discord.build_host_embeds(ctx, site_url, self.timestamp)
+        embeds = [cmk_discord.HostEmbed(ctx, site_url, self.timestamp).to_dict()]
 
         embed = embeds[0]
         self.assertEqual(embed["color"], cmk_discord.ALERT_COLORS["UNREACHABLE"])
 
     def test_build_host_embeds_footer(self):
-        embeds = cmk_discord.build_host_embeds(self.ctx, self.site_url, self.timestamp)
+        embeds = [cmk_discord.HostEmbed(self.ctx, self.site_url, self.timestamp).to_dict()]
 
         embed = embeds[0]
         self.assertEqual(embed["footer"]["text"], "check-host-alive")
@@ -127,7 +127,7 @@ class TestBuildHostEmbeds(unittest.TestCase):
     def test_build_host_embeds_recovery(self):
         ctx = load_test_data("host/recovery_up.json")
         site_url = ctx.get("PARAMETER_2")
-        embeds = cmk_discord.build_host_embeds(ctx, site_url, self.timestamp)
+        embeds = [cmk_discord.HostEmbed(ctx, site_url, self.timestamp).to_dict()]
 
         embed = embeds[0]
         self.assertEqual(embed["title"], ":white_check_mark: RECOVERY: Host: webserver01")
