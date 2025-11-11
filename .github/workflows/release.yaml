@@ -18,6 +18,7 @@ jobs:
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
+      version: ${{ steps.release.outputs.version }}
     steps:
       - uses: actions/create-github-app-token@v2
         id: generate-token
@@ -39,21 +40,15 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Prepare version and MKP structure
-        id: prep
+      - name: Prepare MKP structure
         run: |
-          # Strip 'v' prefix from tag name for mkp-builder
-          VERSION="${{ needs.release.outputs.tag_name }}"
-          VERSION="${VERSION#v}"
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
           mkdir -p local/share/check_mk/notifications
           cp cmk_discord.py local/share/check_mk/notifications/
 
       - name: Build MKP
         uses: oposs/mkp-builder@v2
         with:
-          version: ${{ steps.prep.outputs.version }}
+          version: ${{ needs.release.outputs.version }}
         id: mkp
 
       - name: Upload MKP package
