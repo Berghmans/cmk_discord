@@ -118,7 +118,10 @@ class TestAllHostData(unittest.TestCase):
                 self.assertIn("description", embed)
                 self.assertIn("color", embed)
                 self.assertIn("timestamp", embed)
-                self.assertIn("footer", embed)
+
+                # Footer is optional (only present if host_check_command is provided)
+                if ctx.host_check_command:
+                    self.assertIn("footer", embed)
 
                 # Validate state transition in description
                 self.assertIn("->", embed["description"])
